@@ -1,0 +1,134 @@
+// Walk out of a 2D maze. 
+// We can go 4 directions: right, down, left, up.
+// 0 means pass, 1 means wall,can't pass
+
+// Breadth First Search
+
+/*
+ From http://learn.akae.cn/media/ch12s03.html
+ 
+ 定义一个二维数组：
+ 
+ int maze[5][5] = {
+ 0, 1, 0, 0, 0,
+ 0, 1, 0, 1, 0,
+ 0, 0, 0, 0, 0,
+ 0, 1, 1, 1, 0,
+ 0, 0, 0, 1, 0,
+ };
+ 它表示一个迷宫，其中的1表示墙壁，0表示可以走的路，只能横着走或竖着走，不能斜着走，要求编程序找出从左上角到右下角的路线。
+*/
+
+#include <stdio.h>
+#include <assert.h>
+
+#define MAX_ROW		5
+#define MAX_COL		5
+#define	VISITED		2
+
+typedef struct MY_POINT
+{
+	int row;
+	int col;
+    int pre; //index of predecessor
+}myPoint;
+
+int maze[MAX_ROW][MAX_COL] = {
+	0, 1, 0, 0, 0,
+	0, 1, 0, 1, 0,
+	0, 0, 0, 0, 0,
+	0, 1, 1, 1, 0,
+	0, 0, 0, 1, 0,
+};
+
+myPoint queue[25];
+int m_nHead = 0;
+int m_nTail = 0;
+
+void push_back(myPoint step)
+{
+    assert(m_nTail < 25);
+    queue[m_nTail++] = step;
+}
+
+myPoint pop_front()
+{
+    assert(m_nHead < m_nTail);
+    return queue[m_nHead++];
+}
+
+int is_empty()
+{
+    return (m_nHead >= m_nTail);
+}
+
+void visit(int row, int col)
+{
+    myPoint visitingPoint = {row, col, m_nHead-1};
+    push_back(visitingPoint);
+    maze[row][col] = VISITED;
+}
+
+void print_path()
+{
+    m_nHead--; // now pointing to the destination point
+    
+    while (m_nHead >= 0) 
+    {
+        printf("(%d,%d)\n", queue[m_nHead].row, queue[m_nHead].col);
+        m_nHead = queue[m_nHead].pre;
+    }
+}
+
+int maze_BFS()
+{
+    if (is_empty())
+    {
+        // fail to find the path out
+        return 0;
+    }
+    
+    myPoint step = pop_front();
+    if ((step.row == (MAX_ROW-1)) && (step.col == (MAX_COL-1)))
+    {
+        // arrived destination
+        return 1;
+    }
+    
+    // look down
+    if (((step.row+1) <= (MAX_ROW-1)) && (maze[step.row+1][step.col] == 0)) 
+    {
+        visit(step.row+1, step.col);
+    }
+    // look right
+    if (((step.col+1) <= (MAX_COL-1)) && (maze[step.row][step.col+1] == 0)) 
+    {
+        visit(step.row, step.col+1);
+    }
+    // look up
+    if (((step.row-1) >= 0) && (maze[step.row-1][step.col] == 0)) 
+    {
+        visit(step.row-1, step.col);
+    }
+    // look left
+    if (((step.col-1) >= 0) && (maze[step.row][step.col-1] == 0)) 
+    {
+        visit(step.row, step.col-1);
+    }
+    
+    return maze_BFS();
+}
+
+int main()
+{
+    myPoint step = {0,0,-1};
+    push_back(step);
+    maze[0][0] = VISITED;
+    
+    if (maze_BFS())
+        print_path();
+    else
+        printf("Fail to find path out!");
+    
+    return 0;
+}
